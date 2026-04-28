@@ -8,7 +8,7 @@ const AppSidebar = () => {
 
     const sidebarItems = [
         {
-            path: '#',
+            path: '/genders',
             text: 'Gender List',
         },
         {

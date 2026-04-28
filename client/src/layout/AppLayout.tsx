@@ -7,13 +7,9 @@ import { HeaderProvider } from "../contexts/HeaderContext";
 const LayoutContent = () => {
     return (
         <>
-            <div>
-                <AppSidebar />
-            </div>
-            <div>
-                <AppHeader />
-            </div>
-            <div className="p-20 -ml-14 sm:ml-52">
+            <AppSidebar />
+            <AppHeader />
+            <div className="px-4 pt-20 sm:ml-64 sm:px-6">
                 <Outlet />
             </div>
         </>
