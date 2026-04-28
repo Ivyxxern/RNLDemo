@@ -12,7 +12,7 @@ const AppSidebar = () => {
             text: 'Gender List',
         },
         {
-            path: "#",
+            path: "/users",
             text: "User List",
         },
     ];
@@ -87,7 +87,7 @@ const AppSidebar = () => {
 
                     <ul className="space-y-2 px-3 py-4 font-medium">
                         {sidebarItems.map((sidebarItem) => (
-                            <li>
+                            <li key={sidebarItem.path}>
                                 <Link
                                     to={sidebarItem.path}
                                     className="group flex items-center rounded-lg px-2 py-1.5 text-gray-300 hover:bg-gray-700 hover:text-white"
