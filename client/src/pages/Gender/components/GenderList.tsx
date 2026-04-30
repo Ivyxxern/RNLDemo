@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../../../com
 import type { GenderColoumns } from "../../../interfaces/GenderColumns";
 import GenderService from "../../../services/GenderServices";
 import Spinner from "../../../components/Spinner/Spinner";
+import { Link } from "react-router-dom";
 
 interface GenderListProps {
   refreshKey: boolean;
@@ -63,6 +64,12 @@ const GenderList: FC<GenderListProps> = ({ refreshKey }) => {
               >
                 Gender
               </TableCell>
+              <TableCell
+                isHeader
+                className="px-5 py-3 font-medium text-start"
+              >
+                Action
+              </TableCell>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-gray-100 text-sm text-gray-600">
@@ -85,6 +92,16 @@ const GenderList: FC<GenderListProps> = ({ refreshKey }) => {
                 </TableCell>
                 <TableCell className="px-4 py-3 text-center">
                   {gender.gender}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  <div className="flex justify-center items-center gap-4">
+                    <Link to={`/gender/edit/${gender.gender_id}`}
+                      className="text-green-600 font-medium hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <Link to={`/gender/delete/${gender.gender_id}`} className="text-red-600 font-medium hover:underline">Delete</Link>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

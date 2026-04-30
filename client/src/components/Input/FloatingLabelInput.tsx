@@ -51,16 +51,10 @@ const FloatingLabelInput: FC<FloatingLabelInputProps> = ({ label, type, name, va
             <span className="text-red-600 ml-1">*</span>
           )}
         </label>
-        {errors && errors.length > 0 && (
-          <div className="mt-1 space-y-1">
-            {errors.map((error, index) => (
-              <p key={`${name}-error-${index}`} className="text-red-600 text-xs">
-                {error}
-              </p>
-            ))}
-          </div>
-        )}
       </div>
+      {errors && errors.length > 0 && (
+        <span className="text-red-600 text-xs">{errors[0]}</span>
+      )}
     </>
   );
 };

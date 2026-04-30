@@ -7,6 +7,8 @@ interface SubmitButtonProps {
   className?: string
   loading?: boolean
   loadingLabel?: string
+  /** Light spinner for green/primary buttons */
+  spinnerOnPrimary?: boolean
 }
 
 const SubmitButton: FC<SubmitButtonProps> = ({
@@ -15,8 +17,10 @@ const SubmitButton: FC<SubmitButtonProps> = ({
   className,
   loading = false,
   loadingLabel = "Loading...",
+  spinnerOnPrimary = false,
 }) => {
-  const defaultClassName = `px-4 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-medium cursor-pointer rounded-lg shadow-lg ${className ?? ""}`
+  const defaultClassName = `px-4 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-medium cursor-pointer rounded-lg 
+  shadow-lg disabled:opacity-50 disabled:cursor-not-allowed  ${className ?? ""}`
 
   return (
     <button
@@ -25,8 +29,13 @@ const SubmitButton: FC<SubmitButtonProps> = ({
       disabled={loading}
     >
       {loading ? (
-        <span className="flex items-center gap-2">
-          <Spinner size="xs" />
+        <span className="flex items-center justify-center gap-2">
+          <Spinner
+            size="xs"
+            className={
+              spinnerOnPrimary ? "text-white/30 fill-white" : undefined
+            }
+          />
           {loadingLabel}
         </span>
       ) : (

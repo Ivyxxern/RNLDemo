@@ -9,6 +9,8 @@ interface AddGenderFormProps {
   refreshKey: () => void
 }
 
+const MIN_SAVING_MS = 450;
+
 const AddGenderForm: FC<AddGenderFormProps> = ({ onGenderAdded, refreshKey }) => {
   const [loadingStore, setLoadingStore] = useState(false);
   const [gender, setGender] = useState("");
@@ -18,13 +20,14 @@ const AddGenderForm: FC<AddGenderFormProps> = ({ onGenderAdded, refreshKey }) =>
     e.preventDefault();
     const trimmedGender = gender.trim();
 
-    if (!trimmedGender) {
-      setErrors({ gender: ["The gender field is required."] });
-      return;
-    }
-
+    setLoadingStore(true);
+    const startedAt = Date.now();
     try {
-      setLoadingStore(true);
+      if (!trimmedGender) {
+        setErrors({ gender: ["The gender field is required."] });
+        return;
+      }
+
       const res = await GenderService.storeGender({ gender: trimmedGender });
 
       if (res.status >= 200 && res.status < 300) {
@@ -46,6 +49,10 @@ const AddGenderForm: FC<AddGenderFormProps> = ({ onGenderAdded, refreshKey }) =>
         );
       }
     } finally {
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < MIN_SAVING_MS) {
+        await new Promise((resolve) => setTimeout(resolve, MIN_SAVING_MS - elapsed));
+      }
       setLoadingStore(false);
     }
   };
@@ -68,11 +75,17 @@ const AddGenderForm: FC<AddGenderFormProps> = ({ onGenderAdded, refreshKey }) =>
           onChange={handleGenderChange}
           required
           autoFocus
+          disabled={loadingStore}
           errors={errors.gender}
         />
       </div>
       <div className="flex justify-end">
-        <SubmitButton label="Save Gender" loading={loadingStore} loadingLabel="Saving Gender..." />
+        <SubmitButton
+          label="Save Gender"
+          loading={loadingStore}
+          loadingLabel="Saving Gender..."
+          spinnerOnPrimary
+        />
       </div>
     </form>
   );

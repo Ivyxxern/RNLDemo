@@ -2,16 +2,27 @@ import type { FC } from "react"
 
 interface SpinnerProps {
   size?: 'xs' | 'sm' | 'md' | 'lg'
+  /** Merged after size/base classes (e.g. `text-white/30 fill-white` on dark buttons). */
+  className?: string
 }
 
-const Spinner: FC<SpinnerProps> = ({ size }) => {
+const Spinner: FC<SpinnerProps> = ({ size, className }) => {
+  const sizeClass =
+    size === 'xs'
+      ? 'w-4 h-4'
+      : size === 'sm'
+        ? 'w-6 h-6'
+        : size === 'md'
+          ? 'w-8 h-8'
+          : size === 'lg'
+            ? 'w-10 h-10'
+            : ''
+
   return (
     <div role="status">
       <svg
         aria-hidden="true"
-        className={`inline ${size === 'xs' ? 'w-4 h-4' : size === 'sm' ?  'w-6 h-6' : size === 'md' ? 'w-8 h-8' : 
-          size === 'lg' ? 'w-10 h-10' : ''
-         } text-gray-200 animate-spin fill-blue-600`}
+        className={`inline ${sizeClass} text-gray-200 animate-spin fill-blue-600 ${className ?? ''}`}
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
