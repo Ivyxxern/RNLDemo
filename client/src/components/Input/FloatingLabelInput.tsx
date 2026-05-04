@@ -53,7 +53,7 @@ const FloatingLabelInput: FC<FloatingLabelInputProps> = ({ label, type, name, va
         </label>
       </div>
       {errors && errors.length > 0 && (
-        <span className="text-red-600 text-xs">{errors[0]}</span>
+        <span className="mt-1 block text-xs text-red-600">{errors[0]}</span>
       )}
     </>
   );

@@ -19,8 +19,8 @@ const SubmitButton: FC<SubmitButtonProps> = ({
   loadingLabel = "Loading...",
   spinnerOnPrimary = false,
 }) => {
-  const defaultClassName = `px-4 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-medium cursor-pointer rounded-lg 
-  shadow-lg disabled:opacity-50 disabled:cursor-not-allowed  ${className ?? ""}`
+  const defaultClassName = `px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium cursor-pointer rounded-lg
+  disabled:opacity-50 disabled:cursor-not-allowed ${className ?? ""}`
 
   return (
     <button

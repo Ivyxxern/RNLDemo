@@ -5,6 +5,8 @@ interface ModalProps {
   isOpen: boolean
   onClose: () => void
   className?: string
+  /** Classes for the scrollable body wrapper (default: p-4) */
+  bodyClassName?: string
   children: ReactNode
   showCloseButton?: boolean
   isFullScreen?: boolean
@@ -14,6 +16,7 @@ const Modal: FC<ModalProps> = ({
   isOpen,
   onClose,
   className,
+  bodyClassName,
   children,
   showCloseButton,
   isFullScreen,
@@ -28,7 +31,7 @@ const Modal: FC<ModalProps> = ({
 
   const contentClasses = isFullScreen
     ? "relative w-full h-full rounded-lg bg-white flex flex-col"
-    : "relative w-full sm:max-w-md md:max-w-lg lg:max-w-2xl rounded-lg bg-white max-h-[90vh] flex flex-col"
+    : "relative w-full max-w-4xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col"
 
   useEffect(() => {
     if (isOpen) {
@@ -65,7 +68,9 @@ const Modal: FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && <ModalCloseButton onClose={onClose} />}
-        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+        <div className={`flex-1 overflow-y-auto ${bodyClassName ?? "p-4"}`}>
+          {children}
+        </div>
       </div>
     </div>
   )
