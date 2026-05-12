@@ -10,15 +10,20 @@ import type { UserFieldErrors } from "../../../interfaces/UserFieldErrors"
 import UserService from "../../../services/UserService"
 
 interface AddUserFormModalProps {
-  onUserAdded: (message: string) => void
+  onUserAdded: (message: string) => void;
+  refreshKey: () => void;
   isOpen: boolean
-  onClose: () => void
+  onClose: () => void;
 }
 
-const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onClose }) => {
+const AddUserFormModal: FC<AddUserFormModalProps> = ({ 
+  onUserAdded, 
+  refreshKey,
+  isOpen, 
+  onClose, 
+}) => {
   const [loadingGenders, setLoadingGenders] = useState(false);
   const [genders, setGenders] = useState<GenderColoumns[]>([]);
-  const [existingUsernames] = useState<string[]>([]);
 
   const [loadingStore, setLoadingStore] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -32,138 +37,61 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [errors, setErrors] = useState<UserFieldErrors>({});
 
-  const normalizeApiErrors = (raw: unknown): UserFieldErrors => {
-    if (!raw || typeof raw !== "object") return {}
-    const out: UserFieldErrors = {}
-    for (const [key, val] of Object.entries(raw as Record<string, unknown>)) {
-      if (Array.isArray(val) && val.length > 0) {
-        out[key as keyof UserFieldErrors] = val.map(String)
-      } else if (typeof val === "string" && val) {
-        out[key as keyof UserFieldErrors] = [val]
-      }
-    }
-    return out
-  }
-
-  const validateClient = (): UserFieldErrors => {
-    const next: UserFieldErrors = {}
-    const required = (field: keyof UserFieldErrors, label: string, value: string) => {
-      if (!value?.trim()) {
-        next[field] = [`The ${label} field is required.`]
-      }
-    }
-
-    required("first_name", "first name", firstName)
-    required("last_name", "last name", lastName)
-    required("gender", "gender", gender)
-    required("birth_date", "birth date", birthDate)
-    required("username", "username", username)
-    required("password", "password", password)
-    required("password_confirmation", "password confirmation", passwordConfirmation)
-
-    if (firstName.trim().length > 55) {
-      next.first_name = ["The first name field must not be greater than 55 characters."]
-    }
-
-    if (middleName.trim().length > 55) {
-      next.middle_name = ["The middle name field must not be greater than 55 characters."]
-    }
-
-    if (lastName.trim().length > 55) {
-      next.last_name = ["The last name field must not be greater than 55 characters."]
-    }
-
-    if (suffixName.trim().length > 55) {
-      next.suffix_name = ["The suffix name field must not be greater than 55 characters."]
-    }
-
-    const u = username.trim()
-    if (u && u.length < 6) {
-      next.username = ["The username field must be at least 6 characters."]
-    } else if (u && u.length > 12) {
-      next.username = ["The username field must not be greater than 12 characters."]
-    } else if (u && existingUsernames.some((name) => name.toLowerCase() === u.toLowerCase())) {
-      next.username = ["Username is already taken"]
-    }
-
-    const p = password
-    if (p && p.length < 6) {
-      next.password = ["The password field must be at least 6 characters."]
-    } else if (p && p.length > 12) {
-      next.password = ["The password field must not be greater than 12 characters."]
-    }
-
-    const pc = passwordConfirmation
-    if (pc && pc.length < 6) {
-      next.password_confirmation = ["The password confirmation field must be at least 6 characters."]
-    } else if (pc && pc.length > 12) {
-      next.password_confirmation = ["The password confirmation field must not be greater than 12 characters."]
-    }
-
-    if (p && pc && p !== pc) {
-      next.password_confirmation = ["The password confirmation does not match."]
-    }
-
-    return next
-  }
-
   const handleStoreUser = async (e: FormEvent) => {
-    e.preventDefault()
-
-    setLoadingStore(true)
-    setErrors({})
-
-    const clientErrors = validateClient()
-    if (Object.keys(clientErrors).length > 0) {
-      setErrors(clientErrors)
-      setLoadingStore(false)
-      return
-    }
-
-    const payload = {
-      first_name: firstName,
-      middle_name: middleName,
-      last_name: lastName,
-      suffix_name: suffixName,
-      gender: gender,
-      birth_date: birthDate,
-      username: username,
-      password: password,
-      password_confirmation: passwordConfirmation,
-    }
-
     try {
-      const res = await UserService.storeUser(payload)
+      e.preventDefault();
+
+      setLoadingStore(true);
+
+      const payload = {
+        first_name: firstName,
+        middle_name: middleName,
+        last_name: lastName,
+        suffix_name: suffixName,
+        gender: gender,
+        birth_date: birthDate,
+        username: username,
+        password: password,
+        password_confirmation: passwordConfirmation,
+      };
+
+      const res = await UserService.storeUser(payload);
 
       if (res.status === 200) {
-        onUserAdded(res.data.message)
-
-        setFirstName("")
-        setMiddleName("")
-        setLastName("")
-        setSuffixName("")
-        setGender("")
-        setBirthDate("")
-        setUsername("")
-        setPassword("")
-        setPasswordConfirmation("")
-        setErrors({})
-
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
+        setSuffixName("");
+        setGender("");
+        setBirthDate("");
+        setUsername("");
+        setPassword("");
+        setPasswordConfirmation("");
+        setErrors({});
+        
+        onUserAdded(res.data.message);
+        
         handleLoadGenders();
+        refreshKey();
       } else {
-        console.error("Unexpected status error occured during adding user: ", res.status)
+        console.error(
+          "Unexpected status error occurred during adding user: ",
+          res.status
+        );
       }
-    } catch (error: unknown) {
-      const err = error as { response?: { status?: number; data?: { errors?: unknown } } }
-      if (err.response?.status === 422 && err.response.data?.errors) {
-        setErrors(normalizeApiErrors(err.response.data.errors))
+    } catch (error: any) {
+      if (error.response && error.response.status === 422) {
+        setErrors(error.response.data.errors);
       } else {
-        console.log("Unexpected server error occured during adding user: ", error)
+        console.log(
+          "Unexpected server error occurred during adding user: ",
+          error
+        );
       }
     } finally {
-      setLoadingStore(false)
+      setLoadingStore(false);
     }
-  }
+  };
 
   const handleLoadGenders = async () => {
     const loadingStart = Date.now();

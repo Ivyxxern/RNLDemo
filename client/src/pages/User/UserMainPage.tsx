@@ -1,40 +1,61 @@
-import { useState } from "react"
 import ToastMessage from "../../components/ToastMessage/ToastMessage"
 import { useModal } from "../../hooks/useModal"
+import { useRefresh } from "../../hooks/useRefresh"
 import { useToastMessage } from "../../hooks/useToastMessage"
 import AddUserFormModal from "./Components/AddUserFormModal"
+import EditUserFormModal from "./Components/EditUserFormModal"
 import UserList from "./Components/UserList"
 
 const UserMainPage = () => {
-  const [userListRefresh, setUserListRefresh] = useState(0)
-  const { isOpen, openModal, closeModal } = useModal(false)
+  const {
+    isOpen: isAddUserFormModalOpen,
+    openModal: openAddUserFormModal,
+    closeModal: closeAddUserFormModal
+  } = useModal(false);
+
+  const {
+    isOpen: isEditUserFormModelOpen,
+    selectedUser,
+    openModal: openEditUserFormModal,
+    closeModal: closeEditUserFormModal,
+  } = useModal(false);
+
   const {
     message: toastMessage,
-    isVisible: toastVisible,
+    isVisible: toastMessageIsVisible,
     showToastMessage,
     closeToastMessage,
   } = useToastMessage("", false)
+
+  const { refresh, handleRefresh } = useRefresh(false);
 
   return (
     <>
       <ToastMessage
         message={toastMessage}
-        isSuccess={toastVisible}
+        isVisible={toastMessageIsVisible}
         onClose={closeToastMessage}
       />
       <AddUserFormModal
-        isOpen={isOpen}
-        onClose={closeModal}
-        onUserAdded={(message) => {
-          showToastMessage(message)
-          closeModal()
-          setUserListRefresh((n) => n + 1)
-        }}
+        onUserAdded={showToastMessage}
+        refreshKey={handleRefresh}
+        isOpen={isAddUserFormModalOpen}
+        onClose={closeAddUserFormModal}
       />
-      <UserList onAddUser={openModal}
-        refreshTrigger={userListRefresh} />
+      <EditUserFormModal
+        user={selectedUser}
+        onUserUpdated={showToastMessage}
+        refreshKey={handleRefresh}
+        isOpen={isEditUserFormModelOpen}
+        onClose={closeEditUserFormModal}
+      />
+      <UserList
+        onAddUser={openAddUserFormModal}
+        onEditUser={(user) => openEditUserFormModal(user)}
+        refreshKey={refresh}
+      />
     </>
-  )
-}
+  );
+};
 
-export default UserMainPage
+export default UserMainPage;

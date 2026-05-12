@@ -17,6 +17,17 @@ const UserService = {
       throw error;
     }
   },
+  updateUser: async (userId: number, data: Record<string, string>) => {
+    try {
+      const response = await AxiosInstance.put(
+        `/user/updateUser/${userId}`,
+        data,
+      );
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default UserService;

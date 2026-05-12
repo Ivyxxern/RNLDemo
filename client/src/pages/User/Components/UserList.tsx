@@ -13,9 +13,11 @@ import Spinner from "../../../components/Spinner/Spinner";
 
 interface UserListProps {
   onAddUser: () => void;
+  onEditUser: (user: UserColumns | null) => void;
+  refreshKey: boolean;
 }
 
-const UserList: FC<UserListProps> = ({ onAddUser }) => {
+const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, refreshKey }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<UserColumns[]>([]);
 
@@ -44,17 +46,16 @@ const UserList: FC<UserListProps> = ({ onAddUser }) => {
   const handleUserFullNameFormat = (user: UserColumns) => {
     let fullName = ''
 
-    if(user.middle_name) {
-      fullName = `${user.last_name}, ${
-        user.first_name
-      } ${user.middle_name.charAt(0)}.`;
+    if (user.middle_name) {
+      fullName = `${user.last_name}, ${user.first_name
+        } ${user.middle_name.charAt(0)}.`;
     } else {
       fullName = `${user.last_name}, ${user.first_name}`;
     }
 
     // Doe, John
 
-    if(user.suffix_name) {
+    if (user.suffix_name) {
       fullName += ` ${user.suffix_name}`;
     }
 
@@ -65,7 +66,7 @@ const UserList: FC<UserListProps> = ({ onAddUser }) => {
 
   useEffect(() => {
     handleLoadUsers();
-  }, []);
+  }, [refreshKey]);
 
   return (
     <>
@@ -145,22 +146,23 @@ const UserList: FC<UserListProps> = ({ onAddUser }) => {
                       {user.gender.gender}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
-                      {user.birth_date}
+                      {user.birth_date?.split("T")[0]}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
                       {user.age}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-center">
                       <div className="flex gap-4">
-                      <button 
-                      type="button"
-                       className="text-green-600 font-medium cursor-pointer hover:underline"
-                       >
-                        Edit
+                        <button
+                          type="button"
+                          className="text-green-600 font-medium cursor-pointer hover:underline"
+                          onClick={() => onEditUser(user)}
+                        >
+                          Edit
                         </button>
                         <button
-                        type="button"
-                        className="text-red-600 font-medium cursor-pointer hover:underline"
+                          type="button"
+                          className="text-red-600 font-medium cursor-pointer hover:underline"
                         >
                           Delete
                         </button>
