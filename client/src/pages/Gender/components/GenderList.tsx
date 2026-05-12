@@ -72,16 +72,16 @@ const GenderList: FC<GenderListProps> = ({ refreshKey }) => {
               </TableCell>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-gray-100 text-sm text-gray-600">
-            {genders.length === 0 && loadingGenders ? (
+          <TableBody className="divide-y divide-gray-100 text-sm text-gray-500">
+            {loadingGenders ? (
               <TableRow>
-                <TableCell className="px-4 py-3 text-center" colSpan={2}>
+                <TableCell className="px-4 py-3 text-center" colSpan={3}>
                   <Spinner size="md" />
                 </TableCell>
               </TableRow>
             ) : genders.length === 0 ? (
               <TableRow>
-                <TableCell className="px-4 py-3 text-center text-gray-400" colSpan={2}>
+                <TableCell className="px-4 py-3 text-center text-gray-400" colSpan={3}>
                   No genders found.
                 </TableCell>
               </TableRow>

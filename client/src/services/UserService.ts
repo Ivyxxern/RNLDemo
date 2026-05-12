@@ -2,10 +2,20 @@ import AxiosInstance from "./AxiosInstance";
 
 const UserService = {
   loadUsers: async () => {
-    return AxiosInstance.get("/user/loadUsers");
+    try {
+      const response = await AxiosInstance.get('/user/loadUsers')
+      return response;
+    } catch (error) {
+      throw error;
+    }
   },
-  storeUser: async (data: unknown) => {
-    return AxiosInstance.post("/user/storeUser", data);
+  storeUser: async (data: any) => {
+    try {
+      const response = await AxiosInstance.post("/user/storeUser", data);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   },
 };
 

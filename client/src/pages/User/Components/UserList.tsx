@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,50 +7,65 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/Table";
+import type { UserColumns } from "../../../interfaces/UserColumns";
 import UserService from "../../../services/UserService";
-
-export interface UserListRow {
-  user_id: number;
-  first_name: string;
-  middle_name: string;
-  last_name: string;
-  suffix_name: string;
-  gender: string;
-  birth_date: string | null;
-  age: number;
-  username: string;
-}
+import Spinner from "../../../components/Spinner/Spinner";
 
 interface UserListProps {
   onAddUser: () => void;
-  refreshTrigger?: number;
 }
 
-const UserList: FC<UserListProps> = ({ onAddUser, refreshTrigger = 0 }) => {
-  const [users, setUsers] = useState<UserListRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+const UserList: FC<UserListProps> = ({ onAddUser }) => {
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [users, setUsers] = useState<UserColumns[]>([]);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
+  const handleLoadUsers = async () => {
     try {
+      setLoadingUsers(true);
       const res = await UserService.loadUsers();
-      if (res.status === 200 && Array.isArray(res.data?.users)) {
-        setUsers(res.data.users as UserListRow[]);
+      if (res.status == 200) {
+        setUsers(res.data.users);
       } else {
-        setLoadError("Could not load users.");
+        console.error(
+          "Unexpected status error occurred during loading users: ",
+          res.status,
+        );
       }
-    } catch {
-      setLoadError("Could not load users.");
+    } catch (error) {
+      console.error(
+        "Unexpected server error occurred during loading users: ",
+        error,
+      );
     } finally {
-      setLoading(false);
+      setLoadingUsers(false);
     }
-  }, []);
+  };
+
+  const handleUserFullNameFormat = (user: UserColumns) => {
+    let fullName = ''
+
+    if(user.middle_name) {
+      fullName = `${user.last_name}, ${
+        user.first_name
+      } ${user.middle_name.charAt(0)}.`;
+    } else {
+      fullName = `${user.last_name}, ${user.first_name}`;
+    }
+
+    // Doe, John
+
+    if(user.suffix_name) {
+      fullName += ` ${user.suffix_name}`;
+    }
+
+    // Doe, John Jr.
+
+    return fullName;
+  };
 
   useEffect(() => {
-    void fetchUsers();
-  }, [fetchUsers, refreshTrigger]);
+    handleLoadUsers();
+  }, []);
 
   return (
     <>
@@ -82,25 +97,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, refreshTrigger = 0 }) => {
                   isHeader
                   className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
                 >
-                  First Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
-                >
-                  Middle Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
-                >
-                  Last Name
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
-                >
-                  Suffix Name
+                  Full Name
                 </TableCell>
                 <TableCell
                   isHeader
@@ -124,58 +121,50 @@ const UserList: FC<UserListProps> = ({ onAddUser, refreshTrigger = 0 }) => {
                   isHeader
                   className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
                 >
-                  Username
-                </TableCell>
-                <TableCell isHeader className="px-5 py-3 text-center font-medium">
                   Action
                 </TableCell>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y divide-gray-100 text-sm text-gray-600">
-              {loading ? (
+              {loadingUsers ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="px-4 py-8 text-center">
-                    Loading users…
-                  </TableCell>
-                </TableRow>
-              ) : loadError ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="px-4 py-8 text-center text-red-600">
-                    {loadError}
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="px-4 py-8 text-center text-gray-500">
-                    No users yet. Click Add User to create one.
+                  <TableCell colSpan={6} className="px-4 py-3 text-center">
+                    <Spinner size="md" />
                   </TableCell>
                 </TableRow>
               ) : (
-                users.map((user) => (
-                  <TableRow className="hover:bg-gray-50" key={user.user_id}>
-                    <TableCell className="px-4 py-2.5 text-center">{user.user_id}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.first_name}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.middle_name}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.last_name}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.suffix_name}</TableCell>
-                    <TableCell className="px-4 py-2.5">{user.gender}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.birth_date ?? "—"}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.age}</TableCell>
-                    <TableCell className="px-4 py-2.5 text-center">{user.username}</TableCell>
+                users.map((user, index) => (
+                  <TableRow className="hover:bg-gray-100" key={index}>
+                    <TableCell className="px-4 py-3 text-center">
+                      {index + 1}
+                    </TableCell>
                     <TableCell className="px-4 py-3 text-start">
+                      {handleUserFullNameFormat(user)}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-start">
+                      {user.gender.gender}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-start">
+                      {user.birth_date}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-start">
+                      {user.age}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-center">
                       <div className="flex gap-4">
-                        <button
-                          type="button"
-                          className="cursor-pointer font-medium text-green-600 hover:underline"
-                        >
-                          Edit
+                      <button 
+                      type="button"
+                       className="text-green-600 font-medium cursor-pointer hover:underline"
+                       >
+                        Edit
                         </button>
                         <button
-                          type="button"
-                          className="cursor-pointer font-medium text-red-600 hover:underline"
+                        type="button"
+                        className="text-red-600 font-medium cursor-pointer hover:underline"
                         >
                           Delete
                         </button>
+
                       </div>
                     </TableCell>
                   </TableRow>

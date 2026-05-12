@@ -8,7 +8,6 @@ import type { GenderColoumns } from "../../../interfaces/GenderColumns"
 import GenderService from "../../../services/GenderServices"
 import type { UserFieldErrors } from "../../../interfaces/UserFieldErrors"
 import UserService from "../../../services/UserService"
-import type { UserListRow } from "./UserList"
 
 interface AddUserFormModalProps {
   onUserAdded: (message: string) => void
@@ -19,7 +18,7 @@ interface AddUserFormModalProps {
 const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onClose }) => {
   const [loadingGenders, setLoadingGenders] = useState(false);
   const [genders, setGenders] = useState<GenderColoumns[]>([]);
-  const [existingUsernames, setExistingUsernames] = useState<string[]>([]);
+  const [existingUsernames] = useState<string[]>([]);
 
   const [loadingStore, setLoadingStore] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -149,6 +148,8 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
         setPassword("")
         setPasswordConfirmation("")
         setErrors({})
+
+        handleLoadGenders();
       } else {
         console.error("Unexpected status error occured during adding user: ", res.status)
       }
@@ -189,24 +190,11 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
     }
   };
 
-  const handleLoadUsernames = async () => {
-    try {
-      const res = await UserService.loadUsers()
-      if (res.status === 200 && Array.isArray(res.data?.users)) {
-        const usernames = (res.data.users as UserListRow[])
-          .map((user) => user.username?.trim())
-          .filter((name): name is string => Boolean(name))
-        setExistingUsernames(usernames)
-      }
-    } catch (error) {
-      console.error("Unexpected server error occurred during loading usernames", error)
-    }
-  }
-
   useEffect(() => {
-    handleLoadGenders();
-    handleLoadUsernames();
-  }, []);
+    if (isOpen) {
+      handleLoadGenders();
+    }
+  }, [isOpen]);
 
   return (
     <>
@@ -270,15 +258,17 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({ onUserAdded, isOpen, onCl
                 errors={errors.gender}
                 required
               >
-                <option value="">Select Gender</option>
                 {loadingGenders ? (
                   <option value="">Loading...</option>
                 ) : (
-                  genders.map((g, index) => (
-                    <option value={g.gender_id} key={index}>
-                      {g.gender}
-                    </option>
-                  ))
+                  <>
+                    <option value="">Select Gender</option>
+                    {genders.map((g, index) => (
+                      <option value={g.gender_id} key={index}>
+                        {g.gender}
+                      </option>
+                    ))}
+                  </>
                 )}
               </FloatingLabelSelect>
             </div>

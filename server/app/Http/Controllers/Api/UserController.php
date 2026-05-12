@@ -11,24 +11,9 @@ class UserController extends Controller
 {
     public function loadUsers()
     {
-        $users = User::query()
-            ->with('gender')
-            ->where('is_deleted', 0)
-            ->orderBy('user_id')
-            ->get()
-            ->map(function (User $user) {
-                return [
-                    'user_id' => $user->user_id,
-                    'first_name' => $user->first_name,
-                    'middle_name' => $user->middle_name ?? '',
-                    'last_name' => $user->last_name,
-                    'suffix_name' => $user->suffix_name ?? '',
-                    'gender' => $user->gender?->gender ?? '',
-                    'birth_date' => $user->birth_date?->format('Y-m-d'),
-                    'age' => $user->age,
-                    'username' => $user->username,
-                ];
-            });
+        $users = User::with(['gender'])
+            ->where('tbl_users.is_deleted', false)
+            ->get();
 
         return response()->json([
             'users' => $users,
@@ -37,26 +22,21 @@ class UserController extends Controller
 
     public function storeUser(Request $request)
     {
-        $validated = $request->validate(
-            [
-                'first_name' => ['required', 'max:55'],
-                'middle_name' => ['nullable',  'max:55'],
-                'last_name' => ['required',  'max:55'],
-                'suffix_name' => ['nullable', 'max:55'],
-                'gender' => ['required', 'exists:tbl_genders,gender_id'],
-                'birth_date' => ['required', 'date'],
-                'username' => ['required', 'min:6', 'max:12', Rule::unique('tbl_users', 'username')],
-                'password' => ['required', 'min:6', 'max:12', 'confirmed'],
-                'password_confirmation' => ['required', 'min:6', 'max:12'],
-            ],
-            [
-                'username.unique' => 'Username is already taken',
-            ]
-        );
+        $validated = $request->validate([
+            'first_name' => ['required', 'max:55'],
+            'middle_name' => ['nullable', 'max:55'],
+            'last_name' => ['required', 'max:55'],
+            'suffix_name' => ['nullable', 'max:55'],
+            'gender' => ['required'],
+            'birth_date' => ['required', 'date'],
+            'username' => ['required', 'min:6', 'max:12', Rule::unique('tbl_users', 'username')],
+            'password' => ['required', 'min:6', 'max:12', 'confirmed'],
+            'password_confirmation' => ['required', 'min:6', 'max:12']
+        ]);
 
         $age = date_diff(date_create($validated['birth_date']), date_create('now'))->y;
 
-         User::create([
+        User::create([
             'first_name' => $validated['first_name'],
             'middle_name' => $validated['middle_name'],
             'last_name' => $validated['last_name'],
