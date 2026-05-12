@@ -2,10 +2,12 @@ import { useEffect, useState, type FC, type FormEvent } from "react";
 import BackButton from "../../../components/Button/BackButton"
 import SubmitButton from "../../../components/Button/SubmitButton"
 import FloatingLabelInput from "../../../components/Input/FloatingLabelInput"
-import type { GenderFieldErros } from "../../../interfaces/GenderFieldErrors";
+
 import GenderService from "../../../services/GenderServices";
 import { useParams } from "react-router-dom";
 import Spinner from "../../../components/Spinner/Spinner";
+import type { GenderFieldErrors } from "../../../interfaces/GenderInterface";
+
 
 interface EditGenderFormProps {
   onGenderUpdated: (message: string) => void
@@ -17,7 +19,7 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
   const [loadingGet, setloadingGet] = useState(false);
   const [loadingUpdate, setLoadingUpdate] = useState(false);
   const [gender, setGender] = useState("");
-  const [errors, setErrors] = useState<GenderFieldErros>({});
+  const [errors, setErrors] = useState<GenderFieldErrors>({});
 
   const { gender_id } = useParams()
 

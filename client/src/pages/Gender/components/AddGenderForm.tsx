@@ -2,7 +2,9 @@ import { useState, type ChangeEvent, type FC, type FormEvent } from "react";
 import SubmitButton from "../../../components/Button/SubmitButton";
 import FloatingLabelInput from "../../../components/Input/FloatingLabelInput";
 import GenderService from "../../../services/GenderServices";
-import type { GenderFieldErros } from "../../../interfaces/GenderFieldErrors";
+import type { GenderFieldErrors } from "../../../interfaces/GenderInterface";
+
+
 
 interface AddGenderFormProps {
   onGenderAdded: (message: string) => void;
@@ -14,7 +16,7 @@ const MIN_SAVING_MS = 450;
 const AddGenderForm: FC<AddGenderFormProps> = ({ onGenderAdded, refreshKey }) => {
   const [loadingStore, setLoadingStore] = useState(false);
   const [gender, setGender] = useState("");
-  const [errors, setErrors] = useState<GenderFieldErros>({});
+  const [errors, setErrors] = useState<GenderFieldErrors>({});
 
   const handleStoreGender = async (e: FormEvent) => {
     e.preventDefault();

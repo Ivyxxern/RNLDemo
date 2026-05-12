@@ -9,11 +9,12 @@ import SubmitButton from "../../../components/Button/SubmitButton"
 import FloatingLabelInput from "../../../components/Input/FloatingLabelInput"
 import Modal from "../../../components/Modal"
 import FloatingLabelSelect from "../../../components/Select/FloatingLabelSelect"
-import type { GenderColoumns } from "../../../interfaces/GenderColumns"
-import type { UserColumns } from "../../../interfaces/UserColumns"
-import type { UserFieldErrors } from "../../../interfaces/UserFieldErrors"
+
+
 import GenderService from "../../../services/GenderServices"
 import UserService from "../../../services/UserService"
+import type { UserColumns, UserFieldErrors } from "../../../interfaces/UserInterface"
+import type { GenderColoumns } from "../../../interfaces/GenderInterface"
 
 interface EditUserFormModalProps {
   user: UserColumns | null
@@ -122,21 +123,23 @@ const EditUserFormModal: FC<EditUserFormModalProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (user) {
-      setFirstName(user.first_name);
-      setMiddleName(user.middle_name ?? "");
-      setLastName(user.last_name);
-      setSuffixName(user.suffix_name ?? "");
-      setGender(user.gender.gender_id.toString());
-      setBirthDate(toDateInputValue(user.birth_date));
+    if (isOpen) {
+      if (user) {
+        setFirstName(user.first_name);
+        setMiddleName(user.middle_name ?? "");
+        setLastName(user.last_name);
+        setSuffixName(user.suffix_name ?? "");
+        setGender(user.gender.gender_id.toString());
+        setBirthDate(toDateInputValue(user.birth_date));
         setUsername(user.username);
-    } else {
-      console.log(
-        "Unexpected user error occured during getting user details: ",
-        user
-      );
+      } else {
+        console.log(
+          "Unexpected user error occured during getting user details: ",
+          user
+        );
+      }
     }
-  }, [user]);
+  }, [isOpen, user]);
 
   return (
     <>

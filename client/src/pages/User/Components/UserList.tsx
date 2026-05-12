@@ -7,17 +7,18 @@ import {
   TableHeader,
   TableRow,
 } from "../../../components/Table";
-import type { UserColumns } from "../../../interfaces/UserColumns";
 import UserService from "../../../services/UserService";
 import Spinner from "../../../components/Spinner/Spinner";
+import type { UserColumns } from "../../../interfaces/UserInterface";
 
 interface UserListProps {
   onAddUser: () => void;
   onEditUser: (user: UserColumns | null) => void;
+  onDeleteUser: (user: UserColumns | null) => void;
   refreshKey: boolean;
 }
 
-const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, refreshKey }) => {
+const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refreshKey }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<UserColumns[]>([]);
 
@@ -163,6 +164,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, refreshKey }) => {
                         <button
                           type="button"
                           className="text-red-600 font-medium cursor-pointer hover:underline"
+                          onClick={() => onDeleteUser(user)}
                         >
                           Delete
                         </button>

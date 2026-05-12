@@ -4,10 +4,11 @@ import FloatingLabelInput from "../../../components/Input/FloatingLabelInput"
 import Modal from "../../../components/Modal"
 import FloatingLabelSelect from "../../../components/Select/FloatingLabelSelect"
 import CloseButton from "../../../components/Button/CloseButton"
-import type { GenderColoumns } from "../../../interfaces/GenderColumns"
+
 import GenderService from "../../../services/GenderServices"
-import type { UserFieldErrors } from "../../../interfaces/UserFieldErrors"
 import UserService from "../../../services/UserService"
+import type { UserFieldErrors } from "../../../interfaces/UserInterface"
+import type { GenderColoumns } from "../../../interfaces/GenderInterface"
 
 interface AddUserFormModalProps {
   onUserAdded: (message: string) => void;
@@ -16,11 +17,11 @@ interface AddUserFormModalProps {
   onClose: () => void;
 }
 
-const AddUserFormModal: FC<AddUserFormModalProps> = ({ 
-  onUserAdded, 
+const AddUserFormModal: FC<AddUserFormModalProps> = ({
+  onUserAdded,
   refreshKey,
-  isOpen, 
-  onClose, 
+  isOpen,
+  onClose,
 }) => {
   const [loadingGenders, setLoadingGenders] = useState(false);
   const [genders, setGenders] = useState<GenderColoumns[]>([]);
@@ -68,9 +69,9 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
         setPassword("");
         setPasswordConfirmation("");
         setErrors({});
-        
+
         onUserAdded(res.data.message);
-        
+
         handleLoadGenders();
         refreshKey();
       } else {
@@ -132,17 +133,12 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
         showCloseButton
         bodyClassName="p-0"
       >
-        <form
-          noValidate
-          onSubmit={handleStoreUser}
-          className="flex flex-col"
-        >
-          <header className="border-b border-gray-200 px-6 pb-4 pr-14 pt-1">
-            <h1 className="text-xl font-bold text-gray-900">Add User Form</h1>
-          </header>
-
-          <div className="grid grid-cols-1 gap-x-10 gap-y-1 px-6 py-5 sm:grid-cols-2">
-            <div className="space-y-4">
+        <form onSubmit={handleStoreUser}>
+          <h1 className="border-b border-gray-100 px-6 pb-4 pe-14 pt-6 text-2xl font-semibold">
+            Add User Form
+          </h1>
+          <div className="grid grid-cols-2 gap-4 px-6 pb-6 pt-4">
+            <div className="col-span-2 space-y-4 md:col-span-1">
               <FloatingLabelInput
                 label="First Name"
                 type="text"
@@ -201,7 +197,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
               </FloatingLabelSelect>
             </div>
 
-            <div className="space-y-4">
+            <div className="col-span-2 space-y-4 md:col-span-1">
               <FloatingLabelInput
                 label="Birth Date"
                 type="date"

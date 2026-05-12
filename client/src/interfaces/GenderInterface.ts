@@ -3,5 +3,9 @@ export interface GenderColoumns {
   gender: string;
   is_deleted: boolean;
   created_at: string;
-  updated_at: string; 
+  updated_at: string;
+}
+
+export interface GenderFieldErrors {
+  gender?: string[]
 }
