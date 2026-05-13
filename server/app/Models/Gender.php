@@ -13,6 +13,9 @@ class Gender extends Model
 
     protected $table = 'tbl_genders';
     protected $primaryKey = 'gender_id';
+    // Route model binding: routes use {gender} param, so tell Eloquent to
+    // match it against tbl_genders.gender_id (not the default `id` column).
+    protected $routeKeyName = 'gender_id';
     protected $fillable = [
         'gender',
         'is_deleted',

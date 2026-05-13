@@ -1,35 +1,56 @@
-import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { type FormEvent, useState } from "react";
 import { useHeader } from "../contexts/HeaderContext";
 import { useSidebar } from "../contexts/SidebarContext";
-import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 const AppHeader = () => {
-  const { isOpen, toggleUserMenu } = useHeader()
+  const { isOpen, toggleUserMenu } = useHeader();
   const { toggleSidebar } = useSidebar();
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  const handleUserFullNameFormat = () => {
+    if (!user) return "";
 
-    const onPointerDown = (e: PointerEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
+    let fullName = `${user.user.last_name}, ${user.user.first_name}`;
 
-      const clickedMenu = !!menuRef.current?.contains(target);
-      const clickedButton = !!buttonRef.current?.contains(target);
+    if (user.user.middle_name) {
+      fullName += ` ${user.user.middle_name.charAt(0)}.`;
+    }
 
-      if (!clickedMenu && !clickedButton) {
+    if (user.user.suffix_name) {
+      fullName += ` ${user.user.suffix_name}`;
+    }
+
+    return fullName;
+  };
+
+  const handleLogout = async (e: FormEvent) => {
+    e.preventDefault();
+    if (isLoading) return;
+
+    try {
+      setIsLoading(true);
+      await logout();
+      if (isOpen) {
         toggleUserMenu();
       }
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [isOpen, toggleUserMenu]);
+      navigate("/");
+    } catch (error) {
+      console.error(
+        "Unexpected server error occured during logging user out: ",
+        error
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <>
+      {isOpen && <div className="fixed inset-0 z-40" onClick={toggleUserMenu} />}
       <nav className="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div className="px-3 py-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
@@ -71,10 +92,9 @@ const AppHeader = () => {
               </a>
             </div>
             <div className="flex items-center">
-              <div className="flex items-center ms-3">
+              <div className="relative flex items-center ms-3">
                 <div>
                   <button
-                    ref={buttonRef}
                     type="button"
                     onClick={toggleUserMenu}
                     className="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
@@ -90,31 +110,29 @@ const AppHeader = () => {
                   </button>
                 </div>
                 <div
-                  ref={menuRef}
                   id="dropdown-user"
-                  className={`absolute right-8 top-9 z-50 min-w-[200px] my-4 text-base list-none divide-y divide-gray-100 rounded-sm bg-white shadow-sm dark:divide-gray-600 dark:bg-gray-700 ${isOpen ? "block" : "hidden"}`}
+                  className={`absolute right-8 top-9 min-w-[200px] z-50 ${isOpen ? "block" : "hidden"}
+                  my-2 text-base list-none bg-white divide-y divide-gray-100 rounded-sm shadow-sm
+                  dark:bg-gray-700 dark:divide-gray-600`}
                 >
-                  <div
-                    className="px-4 py-3"
-                    role="none"
-                  >
+                  <div className="px-4 py-3" role="none">
                     <p className="text-sm text-gray-900 dark:text-white" role="none">
-                      Neil Sims
-                    </p>
-                    <p className="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                      neil.sims@flowbite.com
+                      {handleUserFullNameFormat()}
                     </p>
                   </div>
                   <ul className="py-1" role="none">
-
                     <li>
-                      <Link
-                        to="#"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      <button
+                        type="submit"
+                        onClick={handleLogout}
+                        disabled={isLoading}
                         role="menuitem"
+                        className="block w-full px-4 py-2 text-start text-sm text-gray-700 hover:bg-gray-100
+                        dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer
+                        disabled:cursor-not-allowed"
                       >
-                        Sign out
-                      </Link>
+                        {isLoading ? "Signing Out..." : "Sign Out"}
+                      </button>
                     </li>
                   </ul>
                 </div>

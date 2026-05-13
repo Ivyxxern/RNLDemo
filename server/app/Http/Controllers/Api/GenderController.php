@@ -41,17 +41,19 @@ class GenderController extends Controller
         ], 200);
     }
 
-    public function updateGender(Request $request, Gender $gender) {
+    // Fetch by ID explicitly to avoid route-model binding mismatches.
+    public function updateGender(Request $request, $gender) {
+        $genderModel = Gender::findOrFail($gender);
         $validated = $request->validate([
             'gender' => ['required', 'min:3', 'max:30']
         ]);
 
-        $gender->update([
+        $genderModel->update([
             'gender' => $validated['gender']
         ]);
 
         return response()->json([
-            'gender'=> $gender,
+            'gender'=> $genderModel,
             'message' => 'Gender Successfully Updated.'], 200);
     }
 

@@ -33,7 +33,7 @@ const UserMainPage = () => {
     isVisible: toastMessageIsVisible,
     showToastMessage,
     closeToastMessage,
-  } = useToastMessage("", false)
+  } = useToastMessage("", false, false)
 
   const { refresh, handleRefresh } = useRefresh(false);
 
@@ -41,6 +41,7 @@ const UserMainPage = () => {
     <>
       <ToastMessage
         message={toastMessage}
+        isFailed={false}
         isVisible={toastMessageIsVisible}
         onClose={closeToastMessage}
       />

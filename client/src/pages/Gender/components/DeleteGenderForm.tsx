@@ -53,22 +53,11 @@ const DeleteGenderForm = () => {
   const handleDestroyGender = async (e: FormEvent) => {
     try {
       e.preventDefault();
-      if (!gender_id) {
-        console.error("Missing gender ID.");
-        return;
-      }
-
       setLoadingDestroy(true);
-      const res = await GenderService.destroyGender(gender_id);
+      const res = await GenderService.destroyGender(gender_id!);
 
       if (res.status === 200) {
-        const successMessage =
-          res.data?.message ?? "Gender deleted successfully!";
-        navigate("/", {
-          state: {
-            genderDeletedMessage: successMessage,
-          },
-        });
+        navigate("/genders", { state: { message: res.data.message } });
       } else {
         console.error(
           "Unexpected status error occured during deleting gender: ",
@@ -103,7 +92,7 @@ const DeleteGenderForm = () => {
             />
           </div>
           <div className="flex justify-end gap-2">
-            {!loadingDestroy && <BackButton label="Back" path="/" />}
+            {!loadingDestroy && <BackButton label="Back" path="/genders" />}
             <SubmitButton
               label="Delete Gender"
               newClassName="px-4 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-medium cursor-pointer rounded-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"

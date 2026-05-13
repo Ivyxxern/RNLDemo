@@ -4,16 +4,14 @@ import SubmitButton from "../../../components/Button/SubmitButton"
 import FloatingLabelInput from "../../../components/Input/FloatingLabelInput"
 
 import GenderService from "../../../services/GenderServices";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Spinner from "../../../components/Spinner/Spinner";
 import type { GenderFieldErrors } from "../../../interfaces/GenderInterface";
 
 
 interface EditGenderFormProps {
-  onGenderUpdated: (message: string) => void
+  onGenderUpdated: (message: string, failed?: boolean) => void
 }
-
-const MIN_SAVING_MS = 450;
 
 const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
   const [loadingGet, setloadingGet] = useState(false);
@@ -22,6 +20,7 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
   const [errors, setErrors] = useState<GenderFieldErrors>({});
 
   const { gender_id } = useParams()
+  const navigate = useNavigate();
 
   const handleGetGender = async (genderId: number) => {
     try {
@@ -63,7 +62,6 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
     const trimmedGender = gender.trim();
 
     setLoadingUpdate(true);
-    const startedAt = Date.now();
     try {
       if (!trimmedGender) {
         setErrors({ gender: ["The gender field is required."] });
@@ -72,6 +70,8 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
 
       if (!gender_id) {
         console.error("Missing gender ID.");
+        setErrors({ gender: ["Missing gender id in URL."] });
+        onGenderUpdated("Missing gender id in URL.", true);
         return;
       }
 
@@ -79,21 +79,38 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
 
       if (res.status >= 200 && res.status < 300) {
         setErrors({});
-        onGenderUpdated(res.data?.message ?? "Gender Successfully Updated.");
+        const successMessage =
+          res.data?.message ?? "Gender Successfully Updated.";
+
+        // Show feedback immediately on the edit page too (in case navigation/refresh state is cleared).
+        onGenderUpdated(successMessage, false);
+
+        // Go back so the list refreshes and the user sees the change.
+        navigate("/genders", { state: { message: successMessage } });
       } else {
         console.error("Unexpected status error occurred during update gender: ", res.status);
+        setErrors({ gender: ["Update failed. Please try again."] });
+        onGenderUpdated("Update failed. Please try again.", true);
       }
     } catch (error: any) {
       if (error.response?.status === 422) {
         setErrors(error.response.data.errors);
+        onGenderUpdated("Please fix the validation errors.", true);
       } else {
         console.error("Unexpected server error occurred during update gender: ", error);
+        setErrors({
+          gender: [
+            error?.response?.data?.message ??
+            "Update failed. Please try again.",
+          ],
+        });
+        onGenderUpdated(
+          error?.response?.data?.message ??
+          "Update failed. Please try again.",
+          true
+        );
       }
     } finally {
-      const elapsed = Date.now() - startedAt;
-      if (elapsed < MIN_SAVING_MS) {
-        await new Promise((resolve) => setTimeout(resolve, MIN_SAVING_MS - elapsed));
-      }
       setLoadingUpdate(false);
     }
   };
@@ -120,7 +137,7 @@ const EditGenderForm: FC<EditGenderFormProps> = ({ onGenderUpdated }) => {
             />
           </div>
           <div className="flex justify-end gap-2">
-            {!loadingUpdate && <BackButton label="Back" path="/" />}
+            {!loadingUpdate && <BackButton label="Back" path="/genders" />}
             <SubmitButton
               label="Update Gender"
               loading={loadingUpdate}

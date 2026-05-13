@@ -1,24 +1,33 @@
-import { useCallback, useState } from "react"
+import { useCallback, useState } from "react";
 
-export const useToastMessage = (initialMessage: string, initialIsVisible: boolean) => {
-  const [message, setMessage] = useState(initialMessage)
-  const [isVisible, setIsVisible] = useState(initialIsVisible)
+export const useToastMessage = (
+  initialMessage: string,
+  initialIsFailed: boolean = false,
+  initialIsVisible: boolean
+) => {
+  const [message, setMessage] = useState(initialMessage);
+  const [isFailed, setIsFailed] = useState(initialIsFailed);
+  const [isVisible, setIsVisible] = useState(initialIsVisible);
 
-  const showToastMessage = useCallback((msg: string) => {
-    setMessage(msg)
-    setIsVisible(true)
-  }, [])
+  const showToastMessage = useCallback(
+    (msg: string, failed: boolean = false) => {
+    setMessage(msg);
+    setIsFailed(failed);
+    setIsVisible(true);
+  }, 
+  []
+);
 
-  const closeToastMessage = useCallback (() => {
-    setMessage('')
-    setIsVisible(false)
-  }, [])
-
-  const toogleToastMessage = useCallback(() => {
-    setIsVisible((prev) => !prev)
-  }, [])
+  const closeToastMessage = useCallback(() => {
+    setMessage("");
+    setIsVisible(false);
+  }, []);
 
   return {
-    message,  isVisible, showToastMessage, closeToastMessage, toogleToastMessage
-  }
-}
+    message,
+    isFailed,
+    isVisible,
+    showToastMessage,
+    closeToastMessage,
+  };
+};
