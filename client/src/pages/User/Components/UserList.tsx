@@ -1,5 +1,5 @@
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Table,
   TableBody,
@@ -21,37 +21,65 @@ interface UserListProps {
 const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refreshKey }) => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [users, setUsers] = useState<UserColumns[]>([]);
+  const [usersTableCurrentPage, setUsersTableCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const handleLoadUsers = async () => {
+  const tableRef = useRef<HTMLDivElement>(null);
+  const loadUsersInFlightRef = useRef(false);
+
+  const handleLoadUsers = useCallback(async (page: number, append = false) => {
+    if (loadUsersInFlightRef.current) return;
+    loadUsersInFlightRef.current = true;
     try {
       setLoadingUsers(true);
-      const res = await UserService.loadUsers();
-      if (res.status == 200) {
-        setUsers(res.data.users);
+
+      const res = await UserService.loadUsers(page);
+
+      if (res.status === 200) {
+        const usersData = res.data.users.data || res.data.users || [];
+        const lastPage =
+          res.data.users.last_page ||
+          res.data.last_page ||
+          1;
+
+        setUsers((prev) => (append ? [...prev, ...usersData] : usersData));
+        setUsersTableCurrentPage(page);
+        setHasMore(page < lastPage);
       } else {
-        console.error(
-          "Unexpected status error occurred during loading users: ",
-          res.status,
-        );
+        setUsers((prev) => (append ? prev : []));
+        setHasMore(false);
       }
     } catch (error) {
       console.error(
         "Unexpected server error occurred during loading users: ",
-        error,
+        error
       );
     } finally {
       setLoadingUsers(false);
+      loadUsersInFlightRef.current = false;
     }
-  };
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const ref = tableRef.current;
+
+    if (
+      ref &&
+      ref.scrollTop + ref.clientHeight >= ref.scrollHeight - 48 &&
+      hasMore &&
+      !loadingUsers
+    ) {
+      void handleLoadUsers(usersTableCurrentPage + 1, true);
+    }
+  }, [handleLoadUsers, hasMore, loadingUsers, usersTableCurrentPage]);
 
   const handleUserFullNameFormat = (user: UserColumns) => {
-    let fullName = ''
+    let fullName = "";
 
-    if (user.middle_name) {
-      fullName = `${user.last_name}, ${user.first_name
-        } ${user.middle_name.charAt(0)}.`;
-    } else {
+    if (!user.middle_name) {
       fullName = `${user.last_name}, ${user.first_name}`;
+    } else if (user.middle_name) {
+      fullName = `${user.last_name}, ${user.first_name} ${user.middle_name.charAt(0)}.`;
     }
 
     // Doe, John
@@ -66,13 +94,51 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
   };
 
   useEffect(() => {
-    handleLoadUsers();
-  }, [refreshKey]);
+    const ref = tableRef.current;
+
+    if (ref) {
+      ref.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (ref) {
+        ref.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [handleScroll]);
+
+  useEffect(() => {
+    void handleLoadUsers(1, false);
+  }, [refreshKey, handleLoadUsers]);
+
+  // If the first page is shorter than the viewport, nothing scrolls — load more until we scroll or run out.
+  useEffect(() => {
+    if (loadingUsers || !hasMore || users.length === 0) return;
+
+    const id = requestAnimationFrame(() => {
+      const el = tableRef.current;
+      if (!el || loadingUsers || !hasMore) return;
+      if (el.scrollHeight <= el.clientHeight + 2) {
+        void handleLoadUsers(usersTableCurrentPage + 1, true);
+      }
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [
+    users,
+    hasMore,
+    loadingUsers,
+    usersTableCurrentPage,
+    handleLoadUsers,
+  ]);
 
   return (
     <>
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-        <div className="max-w-full overflow-x-auto">
+      <div
+        className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div
+          ref={tableRef}
+          className="relative max-w-full min-h-0 max-h-[calc(100vh-8.5rem)] overflow-auto">
           <Table>
             <caption className="mb-4">
               <div className="border-b border-gray-100">
@@ -127,14 +193,8 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                 </TableCell>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-y divide-gray-100 text-sm text-gray-600">
-              {loadingUsers ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-3 text-center">
-                    <Spinner size="md" />
-                  </TableCell>
-                </TableRow>
-              ) : (
+            <TableBody className="divide-y divide-gray-100 text-sm text-gray-500">
+              {(users.length ?? 0) > 0 ? (
                 users.map((user, index) => (
                   <TableRow className="hover:bg-gray-100" key={index}>
                     <TableCell className="px-4 py-3 text-center">
@@ -168,11 +228,23 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                         >
                           Delete
                         </button>
-
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-3 text-center">
+                    <Spinner size="md" />
+                  </TableCell>
+                </TableRow>
+              )}
+              {loadingUsers && (users.length ?? 0) > 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-3 text-center">
+                    <Spinner size="md" />
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
