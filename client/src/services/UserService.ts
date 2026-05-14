@@ -14,7 +14,7 @@ const UserService = {
       throw error;
     }
   },
-  storeUser: async (data: any) => {
+  storeUser: async (data: FormData | Record<string, unknown>) => {
     try {
       const response = await AxiosInstance.post("/user/storeUser", data);
       return response;
@@ -22,9 +22,9 @@ const UserService = {
       throw error;
     }
   },
-  updateUser: async (userId: number, data: Record<string, string>) => {
+  updateUser: async (userId: number, data: FormData | Record<string, string>) => {
     try {
-      const response = await AxiosInstance.put(
+      const response = await AxiosInstance.post(
         `/user/updateUser/${userId}`,
         data,
       );

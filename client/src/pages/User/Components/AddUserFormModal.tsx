@@ -9,6 +9,7 @@ import GenderService from "../../../services/GenderServices"
 import UserService from "../../../services/UserService"
 import type { UserFieldErrors } from "../../../interfaces/UserInterface"
 import type { GenderColoumns } from "../../../interfaces/GenderInterface"
+import UploadInput from "../../../components/Input/UploadInput"
 
 interface AddUserFormModalProps {
   onUserAdded: (message: string) => void;
@@ -27,6 +28,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
   const [genders, setGenders] = useState<GenderColoumns[]>([]);
 
   const [loadingStore, setLoadingStore] = useState(false);
+  const [addUserProfilePicture, setAddUserProfilePicture] = useState<File | null>(null);
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -38,27 +40,41 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [errors, setErrors] = useState<UserFieldErrors>({});
 
+  const clearFieldError = (key: keyof UserFieldErrors) => {
+    setErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleStoreUser = async (e: FormEvent) => {
     try {
       e.preventDefault();
 
       setLoadingStore(true);
 
-      const payload = {
-        first_name: firstName,
-        middle_name: middleName,
-        last_name: lastName,
-        suffix_name: suffixName,
-        gender: gender,
-        birth_date: birthDate,
-        username: username,
-        password: password,
-        password_confirmation: passwordConfirmation,
-      };
+      const formData = new FormData();
 
-      const res = await UserService.storeUser(payload);
+      if (addUserProfilePicture) {
+        formData.append("add_user_profile_picture", addUserProfilePicture);
+      }
+
+      formData.append("first_name", firstName);
+      formData.append("middle_name", middleName || "");
+      formData.append("last_name", lastName);
+      formData.append("suffix_name", suffixName || "");
+      formData.append("gender", gender);
+      formData.append("birth_date", birthDate);
+      formData.append("username", username);
+      formData.append("password", password);
+      formData.append("password_confirmation", passwordConfirmation);
+
+      const res = await UserService.storeUser(formData);
 
       if (res.status === 200) {
+        setAddUserProfilePicture(null);
         setFirstName("");
         setMiddleName("");
         setLastName("");
@@ -82,7 +98,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
       }
     } catch (error: any) {
       if (error.response && error.response.status === 422) {
-        setErrors(error.response.data.errors);
+        setErrors(error.response.data.errors as UserFieldErrors);
       } else {
         console.log(
           "Unexpected server error occurred during adding user: ",
@@ -121,6 +137,7 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      setErrors({});
       handleLoadGenders();
     }
   }, [isOpen]);
@@ -133,18 +150,33 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
         showCloseButton
         bodyClassName="p-0"
       >
-        <form onSubmit={handleStoreUser}>
-          <h1 className="border-b border-gray-100 px-6 pb-4 pe-14 pt-6 text-2xl font-semibold">
+        <form onSubmit={handleStoreUser} noValidate>
+          <h1 className="border-b border-gray-100 px-6 pb-5 pe-14 pt-6 text-2xl font-semibold">
             Add User Form
           </h1>
-          <div className="grid grid-cols-2 gap-4 px-6 pb-6 pt-4">
-            <div className="col-span-2 space-y-4 md:col-span-1">
+          <div className="mb-6 px-6 pt-5">
+            <UploadInput
+              label="Profile Picture"
+              name="add_user_profile_picture"
+              value={addUserProfilePicture}
+              onChange={(file) => {
+                setAddUserProfilePicture(file);
+                clearFieldError("add_user_profile_picture");
+              }}
+              errors={errors.add_user_profile_picture}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-x-5 px-6 pb-8 pt-0">
+            <div className="col-span-2 space-y-5 md:col-span-1">
               <FloatingLabelInput
                 label="First Name"
                 type="text"
                 name="first_name"
                 value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                onChange={(e) => {
+                  setFirstName(e.target.value);
+                  clearFieldError("first_name");
+                }}
                 required
                 autoFocus
                 errors={errors.first_name}
@@ -154,7 +186,10 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="text"
                 name="middle_name"
                 value={middleName}
-                onChange={(e) => setMiddleName(e.target.value)}
+                onChange={(e) => {
+                  setMiddleName(e.target.value);
+                  clearFieldError("middle_name");
+                }}
                 errors={errors.middle_name}
               />
               <FloatingLabelInput
@@ -162,7 +197,10 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="text"
                 name="last_name"
                 value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                onChange={(e) => {
+                  setLastName(e.target.value);
+                  clearFieldError("last_name");
+                }}
                 required
                 errors={errors.last_name}
               />
@@ -171,14 +209,20 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="text"
                 name="suffix_name"
                 value={suffixName}
-                onChange={(e) => setSuffixName(e.target.value)}
+                onChange={(e) => {
+                  setSuffixName(e.target.value);
+                  clearFieldError("suffix_name");
+                }}
                 errors={errors.suffix_name}
               />
               <FloatingLabelSelect
                 label="Gender"
                 name="gender"
                 value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                  clearFieldError("gender");
+                }}
                 errors={errors.gender}
                 required
               >
@@ -197,13 +241,16 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
               </FloatingLabelSelect>
             </div>
 
-            <div className="col-span-2 space-y-4 md:col-span-1">
+            <div className="col-span-2 space-y-5 md:col-span-1">
               <FloatingLabelInput
                 label="Birth Date"
                 type="date"
                 name="birth_date"
                 value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
+                onChange={(e) => {
+                  setBirthDate(e.target.value);
+                  clearFieldError("birth_date");
+                }}
                 required
                 errors={errors.birth_date}
               />
@@ -212,7 +259,10 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="text"
                 name="username"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  clearFieldError("username");
+                }}
                 required
                 errors={errors.username}
               />
@@ -221,7 +271,11 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="password"
                 name="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError("password");
+                  clearFieldError("password_confirmation");
+                }}
                 required
                 errors={errors.password}
               />
@@ -230,14 +284,17 @@ const AddUserFormModal: FC<AddUserFormModalProps> = ({
                 type="password"
                 name="password_confirmation"
                 value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                onChange={(e) => {
+                  setPasswordConfirmation(e.target.value);
+                  clearFieldError("password_confirmation");
+                }}
                 required
                 errors={errors.password_confirmation}
               />
             </div>
           </div>
 
-          <footer className="flex justify-end gap-3 border-t border-gray-100 px-6 py-4">
+          <footer className="flex justify-end gap-3 border-t border-gray-100 px-6 py-5">
             <CloseButton
               label="Close"
               onClose={onClose}

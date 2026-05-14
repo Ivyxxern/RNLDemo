@@ -11,6 +11,7 @@ import UserService from "../../../services/UserService";
 import Spinner from "../../../components/Spinner/Spinner";
 import type { UserColumns } from "../../../interfaces/UserInterface";
 import FloatingLabelInput from "../../../components/Input/FloatingLabelInput";
+import { toAbsoluteMediaUrl } from "../../../utils/mediaUrl";
 
 interface UserListProps {
   onAddUser: () => void;
@@ -27,6 +28,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [brokenProfileImages, setBrokenProfileImages] = useState<Record<number, true>>({});
 
   const tableRef = useRef<HTMLDivElement>(null);
   const loadUsersInFlightRef = useRef(false);
@@ -129,6 +131,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
     setUsers([]);
     setUsersTableCurrentPage(1)
     setHasMore(true)
+    setBrokenProfileImages({});
 
     handleLoadUsers(1, false, debouncedSearch);
   }, [refreshKey, debouncedSearch]);
@@ -163,7 +166,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                 </div>
               </div>
             </caption>
-            <TableHeader className="bg-blue-600 text-white">
+            <TableHeader className="bg-blue-600 text-white border-b border-gray-200 text-xs z-10">
               <TableRow>
                 <TableCell
                   isHeader
@@ -179,6 +182,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                 </TableCell>
                 <TableCell
                   isHeader
+                  colSpan={2}
                   className="px-5 py-2.5 text-center text-xs font-semibold uppercase tracking-wide"
                 >
                   Gender
@@ -209,6 +213,30 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                   <TableRow className="hover:bg-gray-100" key={index}>
                     <TableCell className="px-4 py-3 text-center">
                       {index + 1}
+                    </TableCell>
+                    <TableCell className="py-3 items-end justify-end">
+                      {user.profile_picture && !brokenProfileImages[user.user_id] ? (
+                        <img
+                          src={toAbsoluteMediaUrl(user.profile_picture) ?? ""}
+                          alt={handleUserFullNameFormat(user)}
+                          className="object-cover w-10 h-10 rounded-full"
+                          onError={() =>
+                            setBrokenProfileImages((prev) => ({
+                              ...prev,
+                              [user.user_id]: true,
+                            }))
+                          }
+                        />
+                      ) : (
+                        <div className="relative inline-flex items-center justify-center w-10 h-10 text-center text-sm
+                        overflow-hidden bg-gray-300 rounded-full">
+                          <span className="font-medium text-gray-600">
+                            {`${user.last_name.charAt(
+                              0
+                            )}${user.first_name.charAt(0)}`}
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="px-4 py-3 text-start">
                       {handleUserFullNameFormat(user)}
@@ -244,7 +272,9 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                 ))
               ) : !loadingUsers && (users.length ?? 0) <= 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-3 text-center font-medium">
+                  <TableCell
+                    colSpan={7}
+                    className="px-4 py-3 text-center font-medium">
                     No Records Found
                   </TableCell>
                 </TableRow>
