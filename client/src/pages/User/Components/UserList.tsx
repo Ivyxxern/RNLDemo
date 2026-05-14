@@ -10,6 +10,7 @@ import {
 import UserService from "../../../services/UserService";
 import Spinner from "../../../components/Spinner/Spinner";
 import type { UserColumns } from "../../../interfaces/UserInterface";
+import FloatingLabelInput from "../../../components/Input/FloatingLabelInput";
 
 interface UserListProps {
   onAddUser: () => void;
@@ -24,16 +25,19 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
   const [usersTableCurrentPage, setUsersTableCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const tableRef = useRef<HTMLDivElement>(null);
   const loadUsersInFlightRef = useRef(false);
 
-  const handleLoadUsers = useCallback(async (page: number, append = false) => {
+  const handleLoadUsers = useCallback(async (page: number, append = false, search: string) => {
     if (loadUsersInFlightRef.current) return;
     loadUsersInFlightRef.current = true;
     try {
       setLoadingUsers(true);
 
-      const res = await UserService.loadUsers(page);
+      const res = await UserService.loadUsers(page, search);
 
       if (res.status === 200) {
         const usersData = res.data.users.data || res.data.users || [];
@@ -58,7 +62,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
       setLoadingUsers(false);
       loadUsersInFlightRef.current = false;
     }
-  }, []);
+  }, [search]);
 
   const handleScroll = useCallback(() => {
     const ref = tableRef.current;
@@ -69,9 +73,15 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
       hasMore &&
       !loadingUsers
     ) {
-      void handleLoadUsers(usersTableCurrentPage + 1, true);
+      void handleLoadUsers(usersTableCurrentPage + 1, true, debouncedSearch);
     }
-  }, [handleLoadUsers, hasMore, loadingUsers, usersTableCurrentPage]);
+  }, [
+    debouncedSearch,
+    handleLoadUsers,
+    hasMore,
+    loadingUsers,
+    usersTableCurrentPage,
+  ]);
 
   const handleUserFullNameFormat = (user: UserColumns) => {
     let fullName = "";
@@ -108,41 +118,41 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
   }, [handleScroll]);
 
   useEffect(() => {
-    void handleLoadUsers(1, false);
-  }, [refreshKey, handleLoadUsers]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 800);
 
-  // If the first page is shorter than the viewport, nothing scrolls — load more until we scroll or run out.
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
-    if (loadingUsers || !hasMore || users.length === 0) return;
+    setUsers([]);
+    setUsersTableCurrentPage(1)
+    setHasMore(true)
 
-    const id = requestAnimationFrame(() => {
-      const el = tableRef.current;
-      if (!el || loadingUsers || !hasMore) return;
-      if (el.scrollHeight <= el.clientHeight + 2) {
-        void handleLoadUsers(usersTableCurrentPage + 1, true);
-      }
-    });
-
-    return () => cancelAnimationFrame(id);
-  }, [
-    users,
-    hasMore,
-    loadingUsers,
-    usersTableCurrentPage,
-    handleLoadUsers,
-  ]);
+    handleLoadUsers(1, false, debouncedSearch);
+  }, [refreshKey, debouncedSearch]);
 
   return (
-    <>
-      <div
-        className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div>
         <div
           ref={tableRef}
-          className="relative max-w-full min-h-0 max-h-[calc(100vh-8.5rem)] overflow-auto">
+          className="relative max-w-full max-h-[calc(100vh-8.5rem)] overflow-x-auto"
+        >
           <Table>
             <caption className="mb-4">
               <div className="border-b border-gray-100">
-                <div className="flex justify-end p-4">
+                <div className="p-4 flex justify-between">
+                  <div className="w-64">
+                    <FloatingLabelInput
+                      label="Search"
+                      type="text"
+                      name="search"
+                      onChange={(e) => setSearch(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
                   <button
                     type="button"
                     className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2 font-medium text-white shadow-lg transition hover:bg-blue-700"
@@ -232,6 +242,12 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
                     </TableCell>
                   </TableRow>
                 ))
+              ) : !loadingUsers && (users.length ?? 0) <= 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-3 text-center font-medium">
+                    No Records Found
+                  </TableCell>
+                </TableRow>
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="px-4 py-3 text-center">
@@ -250,7 +266,7 @@ const UserList: FC<UserListProps> = ({ onAddUser, onEditUser, onDeleteUser, refr
           </Table>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

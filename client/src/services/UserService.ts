@@ -1,9 +1,14 @@
 import AxiosInstance from "./AxiosInstance";
 
 const UserService = {
-  loadUsers: async (page: number) => {
+  loadUsers: async (page: number, search: string) => {
     try {
-      const response = await AxiosInstance.get(`/user/loadUsers?page=${page}`);
+      const q = search.trim();
+      const response = await AxiosInstance.get(
+        q
+          ? `/user/loadUsers?page=${page}&search=${encodeURIComponent(q)}`
+          : `/user/loadUsers?page=${page}`
+      );
       return response;
     } catch (error) {
       throw error;
